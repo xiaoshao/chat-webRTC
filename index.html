@@ -57,6 +57,29 @@
             margin-top: 263px;
             margin-left: 965px;
         }
+        #startVideo{
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            margin-top: 263px;
+            margin-left: 1000px;
+        }
+
+        #self{
+            height: 255px;
+            width: 524px;
+            position: absolute;
+            margin-top: -30px;
+            margin-left: 10px;
+        }
+
+        #remote{
+            height: 255px;
+            width: 524px;
+            position: absolute;
+            margin-top: -30px;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -79,7 +102,9 @@
 <div id="messageArea">
     <ul id="messages"></ul>
     <form action="">
-        <input type="text" id="message"/><input type="submit" value="send" id="send"/>
+        <input type="text" id="message"/>
+        <input type="submit" value="send" id="send"/>
+        <input type="button" value="video" id="startVideo"/>
     </form>
 </div>
 
@@ -97,11 +122,38 @@
 
     var pc = new webkitRTCPeerConnection(iceServer);
 
+    pc.onicecandidate = function(event){
+      if(event.candidate !== null){
+          socket.send(JSON.stringify({
+              "type": "candidate",
+              "data": {
+                  "candidate": event.candidate
+              }
+          }));
+      }
+    };
+
+    pc.onaddstream = function(event){
+        $("#remote")[0].src = URL.createObjectURL(event.stream);
+    }
+
     socket.onmessage = function(event){
         var json = JSON.parse(event.data);
 
         if(json.type==="textMessage"){
             $("#messages").append($("<li></li>").text(json.content.message));
+        }else if(json.type ==="candidate"){
+            pc.addIceCandidate(new RTCIceCandidate(json.data.candidate));
+        }else{
+            pc.setRemoteDescription(new RTCSessionDescription(json.data.sdp));
+
+            if(json.type === "offer"){
+                pc.createAnswer(sendAnswerFn, function(error){
+                    if(error){
+                        console.log("Fail callback: " + error);
+                    }
+                });
+            }
         }
     };
 
@@ -111,6 +163,47 @@
         return false;
     });
 
+    var sendOfferFn = function (sdp){
+        pc.setLocalDescription(sdp);
+
+        socket.send(JSON.stringify({
+            "type": "offer",
+            "data": {
+                "sdp": sdp
+            }
+        }));
+    };
+
+    var sendAnswerFn = function(sdp){
+        pc.setLocalDescription(sdp);
+
+        socket.send(JSON.stringify({
+            "type" : "answer",
+            "data" : {
+                "sdp": sdp
+            }
+        }));
+    };
+
+    $("#startVideo").click(function(){
+        navigator.webkitGetUserMedia({"video":true}, function(stream){
+           $("#self")[0].src = URL.createObjectURL(stream);
+
+            pc.addStream(stream);
+
+            if(isCaller){
+                pc.createOffer(sendOfferFn, function(error){
+                   if(error){
+                       console.log("Failure callback : " + error);
+                   }
+                });
+            }
+        }, function(error){
+            if(error){
+                console.log("get video error");
+            }
+        });
+    });
 </script>
 </body>
 </html>
