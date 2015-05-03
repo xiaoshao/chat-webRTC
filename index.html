@@ -2,9 +2,85 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title></title>
+    <title>Video Chat</title>
+    <style>
+        #videoArea, #messageArea {
+            width: 1050px;
+            height: 300px;
+            background: gray;
+            margin-top: 30px;
+            margin-left: 130px;
+        }
+
+        #selfArea, #remoteArea {
+            width: 500px;
+            height: 260px;
+            margin-top: 5px;
+            margin-left: 10px;
+            background: burlywood;
+        }
+
+        #remoteArea {
+            position: absolute;
+            width: 500px;
+            height: 260px;
+            background: burlywood;
+            margin-left: 530px;
+            margin-top: -260px;
+        }
+
+        p {
+            margin-left: 0px;
+            margin-top: 0px
+        }
+
+        #messages {
+            position: absolute;
+            width: 1000px;
+            height: 250px;
+            margin-top: 5px;
+            margin-left: 5px;
+            background: aliceblue;
+        }
+
+        #message{
+            position: absolute;
+            width: 950px;
+            height: 30px;
+            margin-top: 263px;
+            margin-left: 5px;
+        }
+        #send{
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            margin-top: 263px;
+            margin-left: 965px;
+        }
+    </style>
 </head>
 <body>
 
+<div id="videoArea">
+    video area
+    <div id="selfArea">
+        <p>self video</p>
+        <video id="self" autoplay>
+
+        </video>
+    </div>
+    <div id="remoteArea">
+        <p>remote video</p>
+        <video id="remote">
+
+        </video>
+    </div>
+</div>
+<div id="messageArea">
+    <ul id="messages"></ul>
+    <form action="">
+        <input type="text" id="message"/><input type="submit" value="send" id="send"/>
+    </form>
+</div>
 </body>
 </html>
