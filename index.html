@@ -82,5 +82,35 @@
         <input type="text" id="message"/><input type="submit" value="send" id="send"/>
     </form>
 </div>
+
+<script type="text/javascript" src="http://code.jquery.com/jquery-2.1.4.js"></script>
+<script>
+    var isCaller = window.location.href.split('#')[1];
+
+    var socket = new WebSocket("ws://127.0.0.1:3000");
+
+    var iceServer = {
+        "iceServers": [{
+            "url": "stun:stun.l.google.com:19302"
+        }]
+    };
+
+    var pc = new webkitRTCPeerConnection(iceServer);
+
+    socket.onmessage = function(event){
+        var json = JSON.parse(event.data);
+
+        if(json.type==="textMessage"){
+            $("#messages").append($("<li></li>").text(json.content.message));
+        }
+    };
+
+    $("form").submit(function(){
+        socket.send(JSON.stringify({"type": "textMessage", "content": {"message": $("#message").val()}}));
+        $("#message").val('');
+        return false;
+    });
+
+</script>
 </body>
 </html>
