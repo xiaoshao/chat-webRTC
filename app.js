@@ -16,3 +16,8 @@ app.get("/", function(req, resp){
 
 var websocketServer = require("ws").Server;
 
+var wss = new websocketServer({server:server});
+
+wss.on("connection", function(client){
+    console.log("connect....");
+});
