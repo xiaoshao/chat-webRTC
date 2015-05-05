@@ -18,6 +18,10 @@ var websocketServer = require("ws").Server;
 
 var wss = new websocketServer({server:server});
 
+var clients = [];
 wss.on("connection", function(client){
     console.log("connect....");
+    clients.push(client);
+
+    client.send({type: 'textMessage', data: { message: "hello world!"}});
 });
