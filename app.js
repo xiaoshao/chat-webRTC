@@ -22,13 +22,14 @@ var clients = [];
 wss.on("connection", function(client){
     console.log("connect....");
     clients.push(client);
-    client.send({type: 'textMessage', data: { message: "hello world!"}}, function(error){
+    client.send("{type: 'textMessage', data: { message: 'hello world!'}}", function(error){
         if(error){
             console.log("send message error : " + error);
         }
     });
 
     client.onmessage = function (msg) {
-        console.log(msg);
+        
+        console.log(JSON.stringify(msg));
     };
 });
