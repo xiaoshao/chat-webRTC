@@ -86,9 +86,13 @@
 <script>
     var socket = new WebSocket("ws://127.0.0.1:3000");
 
-    socket.onmessage =function(msg) {
-        alert(msg);
-    };
+    submit = function(mesg) {
+        socket.onmessage =function(msg) {
+            alert(msg);
+            socket.send("sssss");
+        };
+    }
+
 
 
 </script>
