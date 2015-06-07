@@ -195,8 +195,13 @@
         return false;
     });
 
-
-
+    //When receive message from server.
+    socket.onmessage = function(event){
+        var json = JSON.parse(event.data);
+        if(json.type === "textMessage"){
+            $("#messages").append($("<li></li>").text(json.content.message));
+        }
+    }
 
 </script>
 </body>

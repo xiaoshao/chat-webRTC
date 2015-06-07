@@ -31,19 +31,24 @@ wss.on("connection", function (client) {
     client.onmessage = function (msg) {
         //When get message from client
         console.log(msg.data);
-        sendMessage(msg, client);
+        sendMessage(msg.data, client);
 
     };
 
 });
 
 //send message to clients without self
-function sendMessage(msg, client) {
+function sendMessage(message, client) {
 
-    for (cli in clients) {
-        if (cli === client) {
-            continue;
+    for (var index = 0; index < clients.length; index++) {
+        var cls = clients[index];
+
+        if (cls != client) {
+            cls.send(message, function (error) {
+                if (error) {
+                    console.log("send to client error." + error);
+                }
+            });
         }
-        cli.send(msg);
     }
 }
