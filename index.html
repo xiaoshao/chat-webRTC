@@ -108,43 +108,18 @@
 
    //send candidate to socket server 
    pc.onicecandidate = function(event){
-       if(event.candidate !== null){
-           socket.send(JSON.stringify({
-               "type": "candidate",
-               "data": {
-                   "candidate": event.candidate
-               }
-           }));
-       }
    };
 
    //when get remote stream
    pc.onaddstream = function(event){
-       $("#remote")[0].src = URL.createObjectURL(event.stream);
    };
 
     // set local description and send offer to server.
    var sendOfferFn = function (sdp){
-       pc.setLocalDescription(sdp);
-
-       socket.send(JSON.stringify({
-           "type": "offer",
-           "data": {
-               "sdp": sdp
-           }
-       }));
    };
 
    //send answer to socket server
    var sendAnswerFn = function(sdp){
-       pc.setLocalDescription(sdp);
-
-       socket.send(JSON.stringify({
-           "type" : "answer",
-           "data" : {
-               "sdp": sdp
-           }
-       }));
    };
 
     var socket = new WebSocket("ws://127.0.0.1:3000");
@@ -152,64 +127,14 @@
     $("form").submit(function(){
         //send message to server with {"type": "textMessage", "content":{"message": ......}}
         //socket.send();
-        var mesg = $("#message").val();
-        $("#message").val('');
-        $("#messages").append($("<li></li>").text(mesg));
-
-        socket.send(JSON.stringify({"type": "textMessage", "content": {"message": mesg}}));
-
-        return false;
     });
 
     //When receive message from server.
     socket.onmessage = function(event){
-        var json = JSON.parse(event.data);
-        if(json.type === "textMessage"){
-            $("#messages").append($("<li></li>").text(json.content.message));
-        }else if(json.type === "candidate"){
-            pc.addIceCandidate(new RTCIceCandidate(json.data.candidate));
-        }else{
-            pc.setRemoteDescription(new RTCSessionDescription(json.data.sdp));
-
-            if(json.type === "offer"){
-                navigator.webkitGetUserMedia({"video":true}, function (stream) {
-                    $("#self")[0].src = URL.createObjectURL(stream);
-                    pc.addStream(stream);
-                    pc.createAnswer(sendAnswerFn, function(error){
-                        if(error){
-                            console.log("Fail callback: " + error);
-                        }
-                    });
-                }, function(error){
-                    if(error){
-                        console.log("Fail call back : " + error);
-                    }
-                });
-
-
-            }
-        }
     };
 
     //start video
     $("#startVideo").click(function(){
-        navigator.webkitGetUserMedia({"video":true}, function(stream){
-           $("#self")[0].src = URL.createObjectURL(stream);
-
-           pc.addStream(stream);
-
-           // if(isCaller){
-           pc.createOffer(sendOfferFn, function(error){
-               if(error){
-                   console.log("Failure callback : " + error);
-               }
-           });
-           // }
-       }, function(error){
-           if(error){
-               console.log("get video error");
-           }
-       });
     });
 </script>
 </body>

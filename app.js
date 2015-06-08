@@ -39,16 +39,4 @@ wss.on("connection", function (client) {
 
 //send message to clients without self
 function sendMessage(message, client) {
-
-    for (var index = 0; index < clients.length; index++) {
-        var cls = clients[index];
-
-        if (cls != client) {
-            cls.send(message, function (error) {
-                if (error) {
-                    console.log("send to client error." + error);
-                }
-            });
-        }
-    }
 }
