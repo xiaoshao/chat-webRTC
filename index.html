@@ -45,17 +45,24 @@
 
         #message{
             position: absolute;
-            width: 950px;
+            width: 900px;
             height: 30px;
             margin-top: 263px;
             margin-left: 5px;
         }
         #send{
             position: absolute;
-            width: 30px;
+            width: 58px;
             height: 30px;
-            margin-top: 263px;
-            margin-left: 965px;
+            margin-top: 274px;
+            margin-left: 916px;
+        }
+        #startVideo{
+            position: absolute;
+            width: 73px;
+            height: 30px;
+            margin-top: 274px;
+            margin-left: 976px;
         }
     </style>
 </head>
@@ -79,7 +86,9 @@
 <div id="messageArea">
     <ul id="messages"></ul>
     <form action="" onsubmit="return false;">
-        <input type="text" id="message" autocomplete="off"/><input type="submit" value="send" id="send"/>
+        <input type="text" id="message" autocomplete="off"/>
+        <input type="submit" value="send" id="send"/>
+        <input type="button" value="start video" id="startVideo"/>
     </form>
 </div>
 <script src="https://code.jquery.com/jquery-2.1.4.js"></script>
@@ -87,99 +96,56 @@
 
 //    var isCaller = window.location.href.split('#')[1];
 //
-//    var socket = new WebSocket("ws://127.0.0.1:3000");
-//
-//    var iceServer = {
-//        "iceServers": [{
-//            "url": "stun:stun.l.google.com:19302"
-//        }]
-//    };
-//
-//    var pc = new webkitRTCPeerConnection(iceServer);
-//
-//    pc.onicecandidate = function(event){
-//        if(event.candidate !== null){
-//            socket.send(JSON.stringify({
-//                "type": "candidate",
-//                "data": {
-//                    "candidate": event.candidate
-//                }
-//            }));
-//        }
-//    };
-//
-//    pc.onaddstream = function(event){
-//        $("#remote")[0].src = URL.createObjectURL(event.stream);
-//    }
-//
-//    socket.onmessage = function(event){
-//        var json = JSON.parse(event.data);
-//
-//        if(json.type==="textMessage"){
-//            $("#messages").append($("<li></li>").text(json.content.message));
-//        }else if(json.type ==="candidate"){
-//            pc.addIceCandidate(new RTCIceCandidate(json.data.candidate));
-//        }else{
-//            pc.setRemoteDescription(new RTCSessionDescription(json.data.sdp));
-//
-//            if(json.type === "offer"){
-//                pc.createAnswer(sendAnswerFn, function(error){
-//                    if(error){
-//                        console.log("Fail callback: " + error);
-//                    }
-//                });
-//            }
-//        }
-//    };
-//
-//    $("form").submit(function(){
-//        socket.send(JSON.stringify({"type": "textMessage", "content": {"message": $("#message").val()}}));
-//        $("#message").val('');
-//        return false;
-//    });
-//
-//    var sendOfferFn = function (sdp){
-//        pc.setLocalDescription(sdp);
-//
-//        socket.send(JSON.stringify({
-//            "type": "offer",
-//            "data": {
-//                "sdp": sdp
-//            }
-//        }));
-//    };
-//
-//    var sendAnswerFn = function(sdp){
-//        pc.setLocalDescription(sdp);
-//
-//        socket.send(JSON.stringify({
-//            "type" : "answer",
-//            "data" : {
-//                "sdp": sdp
-//            }
-//        }));
-//    };
-//
-//    $("#startVideo").click(function(){
-//        navigator.webkitGetUserMedia({"video":true}, function(stream){
-//            $("#self")[0].src = URL.createObjectURL(stream);
-//
-//            pc.addStream(stream);
-//
-//            if(isCaller){
-//                pc.createOffer(sendOfferFn, function(error){
-//                    if(error){
-//                        console.log("Failure callback : " + error);
-//                    }
-//                });
-//            }
-//        }, function(error){
-//            if(error){
-//                console.log("get video error");
-//            }
-//        });
-//    });
+   var socket = new WebSocket("ws://127.0.0.1:3000");
 
+   var iceServer = {
+       "iceServers": [{
+           "url": "stun:stun.l.google.com:19302"
+       }]
+   };
+
+   var pc = new webkitRTCPeerConnection(iceServer);
+
+   //send candidate to socket server 
+   pc.onicecandidate = function(event){
+       if(event.candidate !== null){
+           socket.send(JSON.stringify({
+               "type": "candidate",
+               "data": {
+                   "candidate": event.candidate
+               }
+           }));
+       }
+   };
+
+   //when get remote stream
+   pc.onaddstream = function(event){
+       $("#remote")[0].src = URL.createObjectURL(event.stream);
+   };
+
+    // set local description and send offer to server.
+   var sendOfferFn = function (sdp){
+       pc.setLocalDescription(sdp);
+
+       socket.send(JSON.stringify({
+           "type": "offer",
+           "data": {
+               "sdp": sdp
+           }
+       }));
+   };
+
+   //send answer to socket server
+   var sendAnswerFn = function(sdp){
+       pc.setLocalDescription(sdp);
+
+       socket.send(JSON.stringify({
+           "type" : "answer",
+           "data" : {
+               "sdp": sdp
+           }
+       }));
+   };
 
     var socket = new WebSocket("ws://127.0.0.1:3000");
 
@@ -200,9 +166,51 @@
         var json = JSON.parse(event.data);
         if(json.type === "textMessage"){
             $("#messages").append($("<li></li>").text(json.content.message));
-        }
-    }
+        }else if(json.type === "candidate"){
+            pc.addIceCandidate(new RTCIceCandidate(json.data.candidate));
+        }else{
+            pc.setRemoteDescription(new RTCSessionDescription(json.data.sdp));
 
+            if(json.type === "offer"){
+                navigator.webkitGetUserMedia({"video":true}, function (stream) {
+                    $("#self")[0].src = URL.createObjectURL(stream);
+                    pc.addStream(stream);
+                    pc.createAnswer(sendAnswerFn, function(error){
+                        if(error){
+                            console.log("Fail callback: " + error);
+                        }
+                    });
+                }, function(error){
+                    if(error){
+                        console.log("Fail call back : " + error);
+                    }
+                });
+
+
+            }
+        }
+    };
+
+    //start video
+    $("#startVideo").click(function(){
+        navigator.webkitGetUserMedia({"video":true}, function(stream){
+           $("#self")[0].src = URL.createObjectURL(stream);
+
+           pc.addStream(stream);
+
+           // if(isCaller){
+           pc.createOffer(sendOfferFn, function(error){
+               if(error){
+                   console.log("Failure callback : " + error);
+               }
+           });
+           // }
+       }, function(error){
+           if(error){
+               console.log("get video error");
+           }
+       });
+    });
 </script>
 </body>
 </html>
